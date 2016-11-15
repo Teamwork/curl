@@ -13,7 +13,7 @@
 (function (global) {
 //"use strict"; don't restore this until the config routine is refactored
 	var
-		version = '0.8.14',
+		version = '0.8.15',
 		curlName = 'curl',
 		defineName = 'define',
 		bootScriptAttr = 'data-curl-run',
@@ -1210,10 +1210,20 @@
 		},
 
 		nextTurn: (function (tasks1, tasks2) {
+			var runTasksLater, div;
+
+			if (global.MutationObserver && doc) {
+				div = doc.createElement('div');
+				new global.MutationObserver(runTasks).observe(div, {attributes: true});
+				runTasksLater = function() { ++div.className; };
+			} else {
+				runTasksLater = function() { setTimeout(runTasks, 0); };
+			}
+
 			return function (task, priority) {
 				var firstTask = tasks1.length === 0 && tasks2.length === 0;
 				if (firstTask) {
-					setTimeout(runTasks, 0);
+					runTasksLater();
 				}
 				(priority ? tasks1 : tasks2).push(task);
 			};
